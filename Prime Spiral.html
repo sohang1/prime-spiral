@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Prime Spiral</title>
+  <style>
+    body {font-size:12px; font-weight:bold; }
+    table {text-align:center; margin:0 auto; font-family:"Adobe Fan Heiti Std"; }
+    td {width:25px; height:25px; }
+    .prime {color:red; font-weight:bolder; font-size:1.2em; }
+    #test {position:absolute; visibility:hidden; word-wrap:nowrap; }
+  </style>
+  <style id="new_font"></style>
+</head>
+<body>
+<div style="display:table-cell; vertical-align:middle; text-align:center; width:700px; height:700px; ">
+<table>
+</table>
+</div>
+<div id="test"></div>
+<script>
+var table = document.querySelector('TABLE'), width = 24, height = 24;
+var test_div = document.getElementById('test'), 
+    new_style = document.getElementById('new_font'), cellWidth = 30, divSize;
+
+//Fill empty cells in table
+(function() {
+	for (var i = 0, j, row, cell; i < height; ++i) {
+		row = document.createElement('TR');
+		table.appendChild(row);
+		for (j = 0; j < width; ++j) {
+			cell = document.createElement('TD');
+			cell.innerHTML = '&nbsp;';
+			row.appendChild(cell);
+		}
+	}
+}) ();
+primeSpiral(500, 50);
+
+function isPrime(n) {
+	if (isNaN(n = + n) || n < 2) return false;
+	if (n == 2 || n == 3) return true;
+	if (n % 2 == 0 || n % 3 == 0) return false;
+	for (var sq = Math.sqrt(n), a = 5; a <= sq; a += 6)
+		if (n % a == 0 || n % (a + 2) == 0) return false;
+	return true;
+}
+/*
+//displays whole spiral in one go
+function primeSpiral(n) {
+	var coords = {x:width / 2, y:height / 2}, num,inc;
+
+	function fillCell(content) {
+		table.children[coords.y].children[coords.x].innerHTML = content;
+	}
+	
+	function move(what, till, dir) {
+		for (var count = 0; count++ < till;) { 
+			coords[what] += dir;
+			fillCell(!isPrime(num) ? num : '<span class="prime">' + num + '</span>');
+			if (++num > n) throw new Error(); 
+		}
+	}
+	
+	fillCell('<span class="prime">2</span>');
+	try {
+		for (num = 3, inc = 1; ;) {
+			move('y', inc, 1);
+			move('x', inc++, 1);
+			move('y', inc, -1);
+			move('x', inc++, -1);
+		}
+	}
+	catch(e) {return; }
+}
+*/
+//function *prime_check_iterator
+
+//displays each number in spiral after delay
+function primeSpiral(n, delay=1000) {
+	var coords = {x:width / 2, y:height / 2}, num, a, inc, funcs = [];
+
+	function fillCell(content) {
+		//adjust font size to fit cell
+		test_div.innerHTML = content;
+		var divWidth = parseInt(getComputedStyle(test_div).width);
+		if (divWidth > cellWidth) table.style.fontSize = '' + (parseInt(table.style.fontSize) * cellWidth / divWidth) + 'px';
+
+		//fill actual content in cell
+		table.children[coords.y].children[coords.x].innerHTML = content;
+	}
+	
+	function move(what, till, dir) {
+		for (var count = 0, f; count++ < till;) {
+			f = function() {
+				coords[arguments.callee.what] += arguments.callee.dir;
+				fillCell(!isPrime(num) ? num : '<span class="prime">' + num + '</span>');
+				++num;
+				funcs.shift();
+				setTimeout(funcs[0], delay);
+			};
+			f.what = what;
+			f.dir = dir;
+			funcs.push(f);
+			if (++a > n) throw new Error(); 
+		}
+	}
+	
+	fillCell('<span class="prime">2</span>');
+	setTimeout(function() {funcs[0](); }, delay);
+	
+	try {
+		for (num = a = 3, inc = 1; ;) {
+			move('y', inc, 1);
+			move('x', inc++, 1);
+			move('y', inc, -1);
+			move('x', inc++, -1);
+		}
+	}
+	catch(e) {}
+}
+
+/*
+var st = String.prototype;
+st.count = function(x) { return this.split(x).length-1 };
+st.hasMulti = function() {
+	for (var  i in this.split('')) {
+		if (this.count(this.charAt(i)) > 1) {
+			return true;
+		}
+	} return false;
+};
+
+var primes = [2, 3, 5], least;
+windows.console = windows.console || {log:document.write};
+
+function leastFac(no) {
+	if (no == 1) {return 1; }
+	for (var i in primes) {
+		if (no % primes[i] == 0) { 
+			return least = primes[i];
+		}
+	}
+	i = 0;
+	var  n = Math.sqrt(no);
+//	if (n == Math.round(n) && n.toString().length < 15) {return leastFac(n); }
+	for (var arr = [4, 2, 4, 2, 4, 6, 2, 6], m = 7, l = arr.length; m <= n; m += arr[(i++) % l]) {
+		if (no % m == 0) {
+			return least = m;
+		}
+		if (m % 5 == 0) {console.log(m); }
+	} return least = no;
+}
+
+function isPrime(no) {
+	if (primes.indexOf(no) > -1) {
+		return true;
+	}
+	if (no == leastFac(no)) {
+		primes.push(no);
+		return true;
+	} return false;
+}
+
+function primeFacs(no) { 
+	if (no == 1 || isPrime(no)) {return [no]; }
+	return [least].concat(primeFacs(no/least));
+}
+
+function powers(arr) {
+	for (var i = 0, l = arr.length, e, j, ar = []; i < l; i = j) { 
+		for (e = 0, j = i; j < l; e++, j++) { 
+			if (arr[j] != arr[i]) {break; }
+		}
+		ar.push([arr[i], e]);
+	} return ar;
+}
+
+function primeFactorise(no, showPows, pow) {
+	var facs = primeFacs(no), p = powers(facs);
+	if (pow !== undefined) {
+		return (showPows ? p.map(function(term) {
+			return term[1] > 1 ? term.join(' '+pow+' ') : term[0];
+		}) : facs).join(' * ');
+	}
+	return (showPows ? p.map(function(term) {
+		return term[1] == 1 ? term[0] : term[0] + '<sup>' + term[1] + '</sup>'; 
+	}) : facs).join(' * ');
+}
+
+function mersenne(n) {
+	var i = 3, p = 7, q, arr = [], j = 0;
+	arr.push([2, 3], [3, 7], [5, 31]);
+	console.log([2, 3]);
+	console.log([3, 7]);
+	console.log([5, 31]);
+	for (var ar = [4, 2, 4, 2, 4, 6, 2, 6], m = 7, l = ar.length; i < n; p += ar[(j++) % l]) {
+		if (isPrime(p) && isPrime(q = Math.pow(2, p)-1)) {
+			arr.push([p, q]);
+			console.log([p, q]);
+			i++;
+		}
+	} return arr;
+}
+
+function mersenne(n) {
+	var i = 2, p = 5, q, arr = [], m = 4;
+	arr.push([2, 3], [3, 7]);
+	console.log([2, 3]);
+	console.log([3, 7]);
+	for (; i < n; p += (m = m == 2 ? 4 : 2)) {
+		if (isPrime(p) && isPrime(q = Math.pow(2, p)-1)) {
+			arr.push([p, q]);
+			console.log([p, q]);
+			i++;
+		}
+	} return arr;
+}
+
+for (var k, s, n = Math.pow(10, 6), m = 62623, i = n-m, l = n-1; ++i < l;) {
+	if (!(s = i.toString()).includes('4') && !s.hasMulti() && (k = Math.sqrt(i+522)) == Math.round(k)) {
+		console.log('b = '+(i+m)+' d = '+(6+2*k)); 
+		break; 
+	}
+}
+*/
+</script>
+</body>
+</html>
